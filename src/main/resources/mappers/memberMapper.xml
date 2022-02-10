@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper  namespace="com.spring.cjs2108_cjr.dao.MemberDAO">
+	<select id="getMemberVO" resultType="com.spring.cjs2108_cjr.vo.MemberVO">
+		select * from member where email = #{email};
+	</select>
+	
+	<select id="getMemberVOByNickName" resultType="com.spring.cjs2108_cjr.vo.MemberVO">
+		select * from member where nick = #{nick};
+	</select>
+	
+	<update id="updateLastDate">
+		update member set lastDate = NOW() where email = #{email};
+	</update>
+	
+	<insert id="joinMember">
+		insert into member values(#{vo.nick}, #{vo.email}, #{vo.pwd}, #{vo.name}, #{vo.phone}, #{vo.birth}, #{vo.addrCode}, #{vo.addr1}, #{vo.addr2}, #{vo.addr3}, default, default, default, default, default);
+	</insert>
+	
+	<update id="changePwd">
+		update member set pwd=#{pwd} where email = #{email};
+	</update>
+	
+	<update id="earnPoints">
+		update member set point = point + #{points} where nick = #{nick};
+	</update>
+	
+	<update id="changeNick">
+		update member set nick = #{nick} where nick=#{sNick};
+	</update>
+	
+	<update id="changePhone">
+		update member set phone = #{phone} where nick = #{nick};
+	</update>
+	
+	<update id="changeAddress">
+		update member set addrCode = #{addrCode}, addr1 = #{addr1}, addr2 = #{addr2}, addr3 = #{addr3} where nick = #{nick};
+	</update>
+	
+	<insert id="addVisit">
+		insert into visitData values(default, default, null, #{sessionId}, #{hostIp});
+	</insert>
+	
+	<update id="setVisitNick">
+		update visitData set nick = #{nick} where sessionId = #{sessionId};
+	</update>
+	
+	<select id="getMyReviewCnt" resultType="java.lang.Integer">
+		select count(*) from review where nick = #{nick};
+	</select>
+	
+	<select id="getMyReviewList" resultType="com.spring.cjs2108_cjr.vo.ReviewVO">
+		select * from review where nick = #{nick} order by idx desc limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getReviewByIdx" resultType="com.spring.cjs2108_cjr.vo.ReviewVO">
+		select * from review where idx = #{idx};
+	</select>
+	
+	<update id="goodByeMember">
+		update member set level = -1, pwd='' where nick=#{nick};
+	</update>
+	
+	<delete id="deletePerform">
+		delete from perform where idx = #{idx};
+	</delete>
+	
+	<update id="updateRemainSeatNum">
+		update performSchedule set remainSeatNum = #{remainSeatNum} where idx = #{idx};
+	</update>
+	
+	<select id="getWarn" resultType="java.lang.Integer">
+		select warn from member where nick = #{nick};
+	</select>
+</mapper>

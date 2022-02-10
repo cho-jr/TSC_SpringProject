@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.cjs2108_cjr.dao.SupportDAO">
+	<insert id="addQna">
+		insert into qna values(default, #{vo.nick}, #{vo.email}, #{vo.title}, #{vo.content}, #{vo.alert}, default, null, null);
+	</insert>
+	
+	<select id="getQnaList" resultType="com.spring.cjs2108_cjr.vo.QnaVO">
+		select * from qna where nick = #{nick} order by idx desc limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getQnaListCnt" resultType="java.lang.Integer">
+		select count(*) from qna where nick = #{nick};
+	</select>
+	
+	<select id="getNoticeCnt" resultType="java.lang.Integer">
+		select count(*) from notice where title like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%');
+	</select>
+	
+	<select id="getNoticeList" resultType="com.spring.cjs2108_cjr.vo.NoticeVO">
+		select * from notice where title like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%') 
+		
+		<if test='orderBy.equals("idx")'>
+			order by idx desc
+		</if>
+		<if test='orderBy.equals("important")'>
+			order by important desc, idx desc
+		</if>
+		
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getNoticeVO" resultType="com.spring.cjs2108_cjr.vo.NoticeVO">
+		select * from notice where idx = #{idx};
+	</select>
+	
+	<select id="getPrevNoticeVO" resultType="com.spring.cjs2108_cjr.vo.NoticeVO">
+		select * from notice where <![CDATA[ idx > #{idx} ]]> order by idx limit 1;
+	</select>
+	
+	<select id="getNextNoticeVO" resultType="com.spring.cjs2108_cjr.vo.NoticeVO">
+		select * from notice where <![CDATA[ idx < #{idx} ]]> order by idx desc limit 1;
+	</select>
+	
+	<update id="addNoticeView">
+		update notice set views=views+1 where idx = #{idx};
+	</update>
+	
+	<select id="getFAQCnt" resultType="java.lang.Integer">
+		select count(*) from faq where question like concat('%', #{keyWord}, '%');
+	</select>
+	
+	<select id="getFAQList" resultType="com.spring.cjs2108_cjr.vo.FAQVO">
+		select * from faq where question like concat('%', #{keyWord}, '%')  
+		
+		<if test='orderBy.equals("idx")'>
+			order by idx
+		</if>
+		<if test='orderBy.equals("question")'>
+			order by question 
+		</if>
+		<if test='orderBy.equals("views")'>
+			order by views desc
+		</if>
+		
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<update id="addFAQView">
+		update faq set views=views+1 where idx = #{idx};
+	</update>
+	
+	<select id="getFAQVO" resultType="com.spring.cjs2108_cjr.vo.FAQVO">
+		select * from faq where idx = #{idx};
+	</select>
+	
+	<select id="getPrevFAQVO" resultType="com.spring.cjs2108_cjr.vo.FAQVO">
+		select * from faq where <![CDATA[ idx < #{idx} ]]> order by idx desc limit 1;
+	</select>
+	
+	<select id="getNextFAQVO" resultType="com.spring.cjs2108_cjr.vo.FAQVO">
+		select * from faq where <![CDATA[ idx > #{idx} ]]> order by idx limit 1;
+	</select>
+	
+	<insert id="addSuggestion">
+		insert into suggestion values(default, #{vo.nick}, #{vo.email}, #{vo.title}, #{vo.content}, default, default);
+	</insert>
+	
+	<insert id="submitOfficialLevelUp">
+		insert into official values(default, #{vo.nick}, #{vo.bName}, #{vo.bNumber}, #{vo.addrCode}, 
+		#{vo.addr1}, #{vo.addr2}, #{vo.addr3}, #{vo.mName}, #{vo.department}, #{vo.bank}, #{vo.accountHolder}, 
+		#{vo.accountNum}, #{vo.homepage}, #{vo.etc}, false);
+	</insert>
+	
+	<select id="getOfficialVO" resultType="com.spring.cjs2108_cjr.vo.OfficialVO">
+		select * from official where nick = #{nick};
+	</select>
+	
+	<update id="updateOfficialInfo">
+		update official set bName=#{vo.bName}, bNumber=#{vo.bNumber}, addrCode=#{vo.addrCode}, addr1=#{vo.addr1}, 
+		addr2=#{vo.addr2}, addr3=#{vo.addr3}, mName=#{vo.mName}, department=#{vo.department}, 
+		bank=#{vo.bank}, accountHolder=#{vo.accountHolder}, accountNum=#{vo.accountNum}, 
+		homepage=#{vo.homepage}, etc=#{vo.etc}, checked=false
+		where nick=#{vo.nick};
+	</update>
+</mapper>

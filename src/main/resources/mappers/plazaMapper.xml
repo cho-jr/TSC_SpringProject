@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.cjs2108_cjr.dao.PlazaDAO">
+	<insert id="registFreeBoard">
+		insert into freeBoard values(default, #{vo.nick}, #{vo.title}, #{vo.content}, default, default);
+	</insert>
+	
+	<select id="getFreeBoardCnt" resultType="java.lang.Integer">
+		select count(*) from freeBoard where title like concat('%', #{keyWord}, '%') or nick like concat('%', #{keyWord}, '%');
+	</select>
+	
+	<select id="getFreeBoardList" resultType="com.spring.cjs2108_cjr.vo.FreeBoardVO">
+		select * from freeBoard 
+		
+		where title like concat('%', #{keyWord}, '%') or nick like concat('%', #{keyWord}, '%') 
+		
+		order by idx desc
+		
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getFreeBoardVO" resultType="com.spring.cjs2108_cjr.vo.FreeBoardVO">
+		select * from freeBoard where idx = #{idx};
+	</select>
+	
+	<select id="getPrevFreeBoardVO" resultType="com.spring.cjs2108_cjr.vo.FreeBoardVO">
+		select * from freeBoard where <![CDATA[ idx > #{idx} ]]> order by idx limit 1;
+	</select>
+	
+	<select id="getNextFreeBoardVO" resultType="com.spring.cjs2108_cjr.vo.FreeBoardVO">
+		select * from freeBoard where <![CDATA[ idx < #{idx} ]]> order by idx desc limit 1;
+	</select>
+	
+	<update id="addFreeBoardViews">
+		update freeBoard set views = views + 1 where idx = #{idx};
+	</update>
+	
+	<insert id="addReply">
+		insert into boardReply values(default, #{vo.boardIdx}, #{vo.nick}, #{vo.content}, default, #{vo.replyIdx});
+	</insert>
+	
+	<select id="getReplyList" resultType="com.spring.cjs2108_cjr.vo.BoardReplyVO">
+		select * from boardReply where boardIdx = #{idx} and replyIdx = 0;
+	</select>
+	
+	<select id="getrereplyCnt" resultType="java.lang.Integer">
+		select count(*) from boardReply where replyIdx = #{idx};
+	</select>
+	
+	<select id="getReReply" resultType="com.spring.cjs2108_cjr.vo.BoardReplyVO">
+		select * from boardReply where replyIdx = #{idx};
+	</select>
+	
+	<delete id="deleteReReply">
+		delete from boardReply where idx = #{idx};
+	</delete>
+	
+	<update id="resetReply">
+		update boardReply set nick=null, content='삭제되었습니다.' where idx = #{idx};
+	</update>
+	
+	<update id="updateReply">
+		update boardReply set content=#{content} where idx = #{idx};
+	</update>
+	
+	<select id="getreplyCnt" resultType="java.lang.Integer">
+		select count(*) from boardReply where boardIdx = #{idx};
+	</select>
+	
+	<delete id="deleteBoard">
+		delete from freeBoard where idx = #{idx};
+	</delete>
+	
+	<update id="updateFreeBoard">
+		update freeBoard set title = #{vo.title}, content = #{vo.content}
+		where idx = #{vo.idx};
+	</update>
+	
+	<select id="getRecommendVo" resultType="com.spring.cjs2108_cjr.vo.RecommendVO">
+		select * from recommend where nick = #{nick} and boardIdx = #{idx};
+	</select>
+	
+	<insert id="addRecommend">
+		insert ignore into recommend values(#{vo.nick}, #{vo.boardIdx}, default);
+	</insert>
+	
+	<delete id="cancleRecommend">
+		delete from recommend where nick = #{vo.nick} and boardIdx = #{vo.boardIdx};
+	</delete>
+	
+	<select id="getBoardRecommendCnt" resultType="java.lang.Integer">
+		select count(*) from recommend where boardIdx = #{idx};
+	</select>
+	
+	<select id="getRecentReplyCnt" resultType="java.lang.Integer">
+		select count(*) from boardReply where boardIdx = #{idx} and date_format(wDate, '%Y-%m-%d') > date_add(now(), interval -24 hour);
+	</select>
+</mapper>

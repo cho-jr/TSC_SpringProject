@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.cjs2108_cjr.dao.PerformDAO">
+	
+	<select id="getPerformList" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform
+		where checked=true and 
+		(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+		or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+		<if test='condition.equals("proceeding")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')>=curdate() and date_format(startdate, '%Y-%m-%d')<=curdate()]]>
+		</if>
+		<if test='condition.equals("last")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')<curdate()]]>
+		</if>
+		<if test='condition.equals("comingsoon")'>
+			and <![CDATA[date_format(startdate, '%Y-%m-%d')>curdate()]]>
+		</if>
+		
+		<if test='orderBy.equals("ticketSales")'>
+			 order by ticketSales desc limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equalsIgnoreCase("startDate")'>
+			 order by startdate limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equalsIgnoreCase("endDate")'>
+			 order by enddate limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equalsIgnoreCase("star")'>
+			 order by enddate limit #{startIndexNo},#{pageSize};
+		</if>
+	</select>
+
+	<select id="getPerformListAll" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform where checked=true 
+		
+		<if test='orderBy.equals("ticketSales")'>
+			order by ticketSales desc;
+		</if>
+		<if test='orderBy.equalsIgnoreCase("endDate")'>
+			order by enddate;
+		</if>
+	</select>
+	
+	<select id="getPerformInfo" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform where idx = #{idx} and checked=true;
+	</select>
+	
+	<select id="getAllPerformInfo" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform where idx = #{idx};
+	</select>
+	
+	<select id="getPerformScheduleList" resultType="com.spring.cjs2108_cjr.vo.PerformScheduleVO">
+		select * from performSchedule where performIdx=#{idx} order by schedule;
+	</select>
+	
+	<insert id="registPerformSchedule">
+		insert into performSchedule value(default, #{vo.performIdx}, #{vo.schedule}, #{vo.seatNum}, #{vo.seatNum});
+	</insert>
+	
+	<select id="getPerformSchedule" resultType="com.spring.cjs2108_cjr.vo.PerformScheduleVO">
+		select * from performSchedule where schedule=#{schedule} and performIdx=#{performIdx};
+	</select>
+	
+	<delete id="deletePerformSchedule">
+		delete from performSchedule where idx = #{idx};
+	</delete>
+	
+	<select id="getPerformTime" resultType="com.spring.cjs2108_cjr.vo.PerformScheduleVO">
+		select * from performSchedule where performIdx=#{performIdx} and schedule between date_format(#{schedule}, '%Y-%m-%d') and date_add(date_format(#{schedule}, '%Y-%m-%d'), interval 1 day) order by schedule;
+	</select>
+	
+	<select id="getPerformScheduleByIdx" resultType="com.spring.cjs2108_cjr.vo.PerformScheduleVO">
+		select * from performSchedule where idx=#{idx};
+	</select>
+	
+	<update id="decreaseSeat">
+		update performSchedule set remainSeatNum=#{remainSeatNum} where idx=#{idx};
+	</update>
+	
+	<update id="increaseTicketSales">
+		update perform set ticketSales = ticketSales + 1 where idx = #{idx};
+	</update>
+	
+	<insert id="addReview">
+		insert into review values(default, #{vo.performIdx}, #{vo.nick}, #{vo.star}, #{vo.reviewContent}, default);
+	</insert>
+	
+	<select id="getTotalReviewCnt" resultType="java.lang.Integer">
+		select count(*) from review where performIdx = #{idx};
+	</select>
+	
+	<select id="getReviewList" resultType="com.spring.cjs2108_cjr.vo.ReviewVO">
+		select * from review where performIdx=#{idx} order by idx desc limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<delete id="deleteReview">
+		delete from review where idx = #{idx};
+	</delete>
+	
+	<select id="getReviewIdx" resultType="java.lang.Integer">
+		select max(idx) from review;
+	</select>
+	
+	<update id="updateReview">
+		update review set star=#{vo.star}, reviewContent=#{vo.reviewContent} where idx=#{vo.idx};
+	</update>
+	
+	<select id="getReviewAvg" resultType="java.lang.Double">
+		select avg(star) from review where performIdx = #{idx};
+	</select>
+	
+	<insert id="addReport">
+		insert into report values(default, #{vo.reporterNick}, #{vo.reviewIdx}, #{vo.reason}, default);
+	</insert>
+	
+	<select id="getTheaterVO" resultType="com.spring.cjs2108_cjr.vo.TheaterVO">
+		select * from theater where name=#{theater};
+	</select>
+	
+	<insert id="addViews">
+		insert into performInfoViews values(default, #{vo.nick}, #{vo.performIdx}, default);
+	</insert>
+	
+	<select id="getPerformCnt" resultType="java.lang.Integer">
+		select count(*) from perform
+		where checked=true and 
+		<if test='condition.equals("all")'>
+			(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+			or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'));
+		</if>
+		<if test='condition.equals("proceeding")'>
+			(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+			or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')>=curdate() and date_format(startdate, '%Y-%m-%d')<=curdate()]]>;
+		</if>
+		<if test='condition.equals("last")'>
+			(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+			or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')<curdate()]]>;
+		</if>
+		<if test='condition.equals("comingsoon")'>
+			(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+			or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+			and <![CDATA[date_format(startdate, '%Y-%m-%d')>curdate()]]>;
+		</if>
+	</select>
+	
+	<select id="getSelectedTheme" resultType="java.lang.String">
+		select theme from showTheme order by orderInt;
+	</select>
+	
+	<select id="getShowThemes" resultType="java.lang.String">
+		select theme from showTheme	order by orderInt;
+	</select>
+	
+	<select id="getPerformsInTheme" resultType="java.lang.Integer">
+		select distinct performIdx from themePerform where theme = #{theme} and performIdx is not null;
+	</select>
+	
+	<select id="getPerformListByTheater" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform 
+		where theater = #{theater} and checked=true 
+		and <![CDATA[date_format(enddate, '%Y-%m-%d')>=curdate()]]>;;
+	</select>
+	
+	<select id="getWatchCert" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select * from ticketing 
+		where memberNick = #{nick} and performIdx=#{idx} 
+		and print=true and cancle=false 
+		and performScheduleIdx in 
+		
+		(select idx from performSchedule 
+		where <![CDATA[ date_format(schedule, '%Y-%M-%d') <= date_format(now(), '%Y-%M-%d') ]]>
+		and performIdx=#{idx}) limit 1;
+	</select>
+	
+	<select id="getMyPerform" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform where manager = #{email} order by idx desc limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<select id="getMyPerformCnt" resultType="java.lang.Integer">
+		select count(*) from perform where manager = #{email};
+	</select>
+	
+	<select id="getPerformInfoViews" resultType="java.lang.Integer">
+		select count(*) from performInfoVIews where performIdx = #{idx};
+	</select>
+	
+	<insert id="registPerform">
+		insert into perform values(default, #{vo.manager}, #{vo.title}, #{vo.theater}, #{vo.startDate}, #{vo.endDate}, #{vo.rating}, #{vo.runningTime}, #{vo.seat}, #{vo.price}, #{vo.sale}, #{vo.salePrice}, #{vo.saleMethod}, #{vo.posterOGN}, #{vo.posterFSN}, #{vo.content}, #{vo.checked}, 0);
+	</insert>
+	
+	<select id="getTheater" resultType="com.spring.cjs2108_cjr.vo.TheaterVO">
+		select * from theater where name = #{name};
+	</select>
+	
+	<insert id="registTheater">
+		insert into theater values(default, #{vo.name}, #{vo.address1}, #{vo.address2}, #{vo.address3});
+	</insert>
+	
+	<select id="getTheaterList" resultType="com.spring.cjs2108_cjr.vo.TheaterVO">
+		select * from theater order by name;
+	</select>
+	
+	<update id="updatePerformExceptPoster">
+		update perform set manager=#{vo.manager}, title=#{vo.title}, theater=#{vo.theater}, startdate=#{vo.startDate}, enddate=#{vo.endDate},
+		rating=#{vo.rating}, runningTime=#{vo.runningTime}, seat=#{vo.seat}, price=#{vo.price}, sale=#{vo.sale}, salePrice=#{vo.salePrice}, 
+		saleMethod=#{vo.saleMethod}, content=#{vo.content}, checked=#{vo.checked}
+		where idx = #{vo.idx};
+	</update>
+	
+	<update id="updatePerformAll">
+		update perform set manager=#{vo.manager}, title=#{vo.title}, theater=#{vo.theater}, startdate=#{vo.startDate}, enddate=#{vo.endDate},
+		rating=#{vo.rating}, runningTime=#{vo.runningTime}, seat=#{vo.seat}, price=#{vo.price}, sale=#{vo.sale}, salePrice=#{vo.salePrice}, 
+		saleMethod=#{vo.saleMethod}, posterOGN=#{vo.posterOGN}, posterFSN=#{vo.posterFSN},content=#{vo.content}, checked=#{vo.checked}
+		where idx = #{vo.idx};
+	</update>
+	
+	<select id="getPerformScheduleListInThisMonth" resultType="com.spring.cjs2108_cjr.vo.PerformScheduleVO">
+		select * from performSchedule where performIdx=#{idx} and date_format(schedule, '%Y-%m')=#{ym} order by schedule;
+	</select>
+	
+	<select id="getOneAdvertise" resultType="com.spring.cjs2108_cjr.vo.AdvertiseVO">
+		select * from advertise where idx = #{idx};
+	</select>
+	
+	<select id="getAdvertiseIdxList" resultType="java.lang.Integer">
+		select idx from advertise where 
+		<if test='adtype.equals("main")'>adtype = 'main'</if>
+		<if test='adtype.equals("slim")'>adtype = 'slim'</if>
+		<if test='adtype.equals("card")'>adtype = 'card'</if>
+		 and checked=true;
+	</select>
+	
+	<select id="getBannerAdvList" resultType="com.spring.cjs2108_cjr.vo.AdvertiseVO">
+		select * from advertise where adtype = 'banner' and checked=true order by idx desc;
+	</select>
+	
+	<delete id="deletePerformScheduleInDate">
+		delete from performSchedule where performIdx = #{performIdx} 
+		and date_format(schedule, '%Y-%m-%d')=date_format(#{date}, '%Y-%m-%d');
+	</delete>
+</mapper>

@@ -1,0 +1,684 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.cjs2108_cjr.dao.AdminDAO">
+	<insert id="registPerform">
+		insert into perform values(default, #{vo.manager}, #{vo.title}, #{vo.theater}, #{vo.startDate}, #{vo.endDate}, #{vo.rating}, #{vo.runningTime}, #{vo.seat}, #{vo.price}, #{vo.sale}, #{vo.salePrice}, #{vo.saleMethod}, #{vo.posterOGN}, #{vo.posterFSN}, #{vo.content}, #{vo.checked}, 0);
+	</insert>
+	
+	<select id="getTheater" resultType="com.spring.cjs2108_cjr.vo.TheaterVO">
+		select * from theater where name = #{name};
+	</select>
+	
+	<insert id="registTheater">
+		insert into theater values(default, #{vo.name}, #{vo.address1}, #{vo.address2}, #{vo.address3});
+	</insert>
+	
+	<select id="getTheaterList" resultType="com.spring.cjs2108_cjr.vo.TheaterVO">
+		select * from theater 
+		where name like concat('%', #{keyWord}, '%') or address1 like concat('%', #{keyWord}, '%')
+		<if test='orderBy.equals("name")'>
+			order by name		
+		</if>
+		<if test='orderBy.equals("address")'>
+			order by address1		
+		</if>
+		limit #{startIndexNo}, #{pageSize} 
+		
+	</select>
+	
+	<update id="updatePerformExceptPoster">
+		update perform set manager=#{vo.manager}, title=#{vo.title}, theater=#{vo.theater}, startdate=#{vo.startDate}, enddate=#{vo.endDate},
+		rating=#{vo.rating}, runningTime=#{vo.runningTime}, seat=#{vo.seat}, price=#{vo.price}, sale=#{vo.sale}, salePrice=#{vo.salePrice}, 
+		saleMethod=#{vo.saleMethod}, content=#{vo.content}, checked=#{vo.checked}
+		where idx = #{vo.idx};
+	</update>
+	
+	<update id="updatePerformAll">
+		update perform set manager=#{vo.manager}, title=#{vo.title}, theater=#{vo.theater}, startdate=#{vo.startDate}, enddate=#{vo.endDate},
+		rating=#{vo.rating}, runningTime=#{vo.runningTime}, seat=#{vo.seat}, price=#{vo.price}, sale=#{vo.sale}, salePrice=#{vo.salePrice}, 
+		saleMethod=#{vo.saleMethod}, posterOGN=#{vo.posterOGN}, posterFSN=#{vo.posterFSN},content=#{vo.content}, checked=#{vo.checked}
+		where idx = #{vo.idx};
+	</update>
+	
+	<select id="getTicketsList" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select ticketing.idx as idx, ticketing.memberNick as memberNick, 
+		perform.title as performTitle, perform.theater as performTheater, 
+		DATE_FORMAT(performSchedule.schedule, '%Y년 %m월 %d일 %H:%i') as performSchedule, 
+		ticketing.selectSeatNum as selectSeatNum, 
+		perform.seat as performSeat, ticketing.price as price, 
+		ticketing.usePoint as usePoint, ticketing.finalPrice as finalPrice, ticketing.payBy as payBy, 
+		ticketing.payDate as payDate,
+		ticketing.print as print, 
+		ticketing.cancle as cancle
+		
+		from ticketing, perform, performSchedule 
+		where ticketing.performIdx = perform.idx 
+		and ticketing.performScheduleIdx = performSchedule.idx 
+		and performSchedule.performIdx = perform.idx
+		
+		and (perform.title like concat('%', #{keyWord}, '%') or perform.theater like concat('%', #{keyWord}, '%') 
+		or ticketing.memberNick like concat('%', #{keyWord}, '%'))
+		
+		<if test='!date.equals("")'>
+			and date_format(performSchedule.schedule, '%Y-%m-%d') = #{date}
+		</if>
+		
+		<if test='orderBy.equals("idx")'>
+			order by ticketing.idx desc 		
+		</if>
+		<if test='orderBy.equals("schedule")'>
+			order by date(performSchedule.schedule), time(performSchedule.schedule) 		
+		</if>
+		<if test='orderBy.equals("title")'>
+			order by perform.title, date(performSchedule.schedule), time(performSchedule.schedule)  		
+		</if>
+		<if test='orderBy.equals("theater")'>
+			order by perform.theater, title, date(performSchedule.schedule), time(performSchedule.schedule) 	
+		</if>
+		<if test='orderBy.equals("nick")'>
+			order by ticketing.memberNick, date(performSchedule.schedule), time(performSchedule.schedule) 	
+		</if>
+		<if test='orderBy.equals("performIdx")'>
+			order by ticketing.performIdx, date(performSchedule.schedule), time(performSchedule.schedule)  		
+		</if>
+		<if test='orderBy.equals("payBy")'>
+			order by ticketing.payBy , date(performSchedule.schedule), time(performSchedule.schedule)  		
+		</if>
+		
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<delete id="deleteTheater">
+		delete from theater where idx=#{idx};
+	</delete>
+	
+	<update id="updateTheaterAddress">
+		update theater set address2 = #{address2} where idx = #{idx};
+	</update>
+	
+	<update id="changeMemberLevel">
+		update member set level = #{level} where nick = #{nick};
+	</update>
+	
+	<select id="getMemberSearch" resultType="com.spring.cjs2108_cjr.vo.MemberVO">
+		select * from member where (nick like concat('%', #{keyWord}, '%') or name like concat('%', #{keyWord}, '%') or email like concat('%', #{keyWord}, '%')) and <![CDATA[ level<2 ]]>
+		<if test='orderBy.equals("joinDate")'>
+			order by joinDate desc limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equals("level")'>
+			order by level desc limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equals("lastDate")'>
+			order by lastDate limit #{startIndexNo},#{pageSize};
+		</if>
+		<if test='orderBy.equals("warn")'>
+			order by warn desc limit #{startIndexNo},#{pageSize};
+		</if>
+	</select>
+	
+	<select id="getMemberCnt" resultType="java.lang.Integer">
+		<if test='keyWord.equals("")'>
+			select count(*) from member;
+		</if>
+		<if test='!keyWord.equals("")'>
+			select count(*) from member where nick like concat('%', #{keyWord}, '%') or name like concat('%', #{keyWord}, '%');
+		</if>
+	</select>
+	
+	<select id="getTicketListCnt" resultType="java.lang.Integer">
+		select count(*) from ticketing, perform, performSchedule 
+		where ticketing.performIdx = perform.idx 
+		and ticketing.performScheduleIdx = performSchedule.idx 
+		and performSchedule.performIdx = perform.idx
+		
+		and (perform.title like concat('%', #{keyWord}, '%') or perform.theater like concat('%', #{keyWord}, '%') 
+		or ticketing.memberNick like concat('%', #{keyWord}, '%'))
+		
+		<if test='!date.equals("")'>
+		and date_format(performSchedule.schedule, '%Y-%m-%d') = #{date}
+		</if>
+		;
+	</select>
+	
+	<select id="getAllQnaCnt" resultType="java.lang.Integer">
+			select count(*) from qna 
+			where (title like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%')
+			or answer like concat('%', #{keyWord}, '%') or nick like concat('%', #{keyWord}, '%'))
+		<if test='condition.equals("noAnswer")'>
+			and answer is null; 
+		</if>
+		<if test='condition.equals("answer")'>
+			and answer is not null;
+		</if>
+	</select>
+
+	<select id="getQnaList" resultType="com.spring.cjs2108_cjr.vo.QnaVO">
+			select * from qna 
+			where (title like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%')
+			or answer like concat('%', #{keyWord}, '%') or nick like concat('%', #{keyWord}, '%'))  
+		<if test='condition.equals("noAnswer")'>
+			and answer is null
+		</if>
+		<if test='condition.equals("answer")'>
+			and answer is not null
+		</if>
+		order by idx desc 
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<update id="registAnswer">
+		update qna set answer = #{answer}, aDate = now() where idx = #{idx};
+	</update>
+	
+	<select id="getQnaVo" resultType="com.spring.cjs2108_cjr.vo.QnaVO">
+		select * from qna where idx = #{idx};
+	</select>
+
+	<select id="getTodayVisit" resultType="_int">
+		select count(*) from visitData where date_format(vDate, '%Y-%m-%d')=curdate();
+	</select>
+
+	<select id="getTotalVisit" resultType="_int">
+		select count(*) from visitData;
+	</select>
+	
+	<select id="getPerformCnt" resultType="java.lang.Integer">
+			select count(*) from perform
+			where 
+			(manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+			or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+		<if test='condition.equals("proceeding")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')>=curdate() and date_format(startdate, '%Y-%m-%d')<=curdate()]]>;
+		</if>
+		<if test='condition.equals("last")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')<curdate()]]>;
+		</if>
+		<if test='condition.equals("comingsoon")'>
+			and <![CDATA[date_format(startdate, '%Y-%m-%d')>curdate()]]>;
+		</if>
+	</select>
+	
+	<select id="getPerformList" resultType="com.spring.cjs2108_cjr.vo.PerformVO">
+		select * from perform 
+		where (manager like concat('%', #{keyWord}, '%') or title like concat('%', #{keyWord}, '%')
+		or theater like concat('%', #{keyWord}, '%') or sale like concat('%', #{keyWord}, '%'))
+		<if test='condition.equals("proceeding")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')>=curdate() and date_format(startdate, '%Y-%m-%d')<=curdate()]]>
+		</if>
+		<if test='condition.equals("last")'>
+			and <![CDATA[date_format(enddate, '%Y-%m-%d')<curdate()]]>
+		</if>
+		<if test='condition.equals("comingsoon")'>
+			and <![CDATA[date_format(startdate, '%Y-%m-%d')>curdate()]]>
+		</if>
+		
+		
+		<if test='orderBy.equals("ticketSales")'>
+			 order by ticketSales desc 
+		</if>
+		<if test='orderBy.equalsIgnoreCase("manager")'>
+			 order by manager, ticketSales desc 
+		</if>
+		<if test='orderBy.equalsIgnoreCase("theater")'>
+			 order by theater, ticketSales desc 
+		</if>
+		<if test='orderBy.equalsIgnoreCase("endDate")'>
+			 order by enddate, ticketSales desc 
+		</if>
+		<if test='orderBy.equalsIgnoreCase("checked")'>
+			 order by checked, ticketSales desc 
+		</if>
+		
+		limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<update id="checkedFalse">
+		update perform set checked=false where idx = #{idx};
+	</update>
+	
+	<update id="checkedTrue">
+		update perform set checked=true where idx = #{idx};
+	</update>
+	
+	<delete id="performDelete">
+		delete from perform where idx = #{idx};
+	</delete>
+	
+	<select id="getThemeList" resultType="com.spring.cjs2108_cjr.vo.ThemePerformVO">
+		select distinct theme,count(performIdx) as count from themePerform group by theme order by theme;
+	</select>
+	
+	<select id="getPerformsInTheme" resultType="com.spring.cjs2108_cjr.vo.ThemePerformVO">
+		select distinct * from themePerform where theme = #{theme} and performIdx is not null;
+	</select>
+	
+	<insert id="addThemeName">
+		insert ignore into themePerform(theme) values(#{theme});
+	</insert>
+	
+	<insert id="addPerformInTheme">
+		insert into themePerform values(#{vo.theme}, #{vo.performIdx});
+	</insert>
+	
+	<delete id="deletePerformInTheme">
+		delete from themePerform where theme = #{vo.theme} and performIdx = #{vo.performIdx};
+	</delete>
+	
+	<select id="getShowThemeMaxOrder" resultType="java.lang.Integer">
+		select max(orderInt) from showTheme;
+	</select>
+	
+	<insert id="addShowTheme">
+		insert ignore into showTheme values(#{theme}, #{order});
+	</insert>
+	
+	<select id="getShowThemeOrder" resultType="java.lang.Integer">
+		select orderInt from showTheme where theme=#{theme};
+	</select>
+	
+	<delete id="deleteShowTheme">
+		delete from showTheme where orderInt=#{order};
+	</delete>
+	
+	<update id="minusShowThemeOrder">
+		update showTheme set orderInt = orderInt-1 <![CDATA[where orderInt > #{order}]]>;
+	</update>
+	
+	<delete id="delTheme">
+		delete from themePerform where theme = #{theme};
+	</delete>
+	
+	<select id="getTotReviewCnt" resultType="java.lang.Integer">
+		select count(*) from review where (nick like concat('%', #{keyWord}, '%') or reviewContent like concat('%', #{keyWord}, '%'));
+	</select>
+	
+	<select id="getAllReview" resultType="com.spring.cjs2108_cjr.vo.ReviewVO">
+		select * from review where nick like concat('%', #{keyWord}, '%') or reviewContent like concat('%', #{keyWord}, '%') 
+		
+		<if test='orderBy.equals("nick")'>
+			 order by nick, idx desc 
+		</if>
+		<if test='orderBy.equals("star")'>
+			 order by star desc, performIdx desc 
+		</if>
+		<if test='orderBy.equals("idx")'>
+			 order by idx desc 
+		</if>
+		<if test='orderBy.equals("performIdx")'>
+			 order by performIdx, star desc 
+		</if>
+		limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<select id="getTotReportCnt" resultType="java.lang.Integer">
+		select count(*) from report;
+	</select>
+	
+	<select id="getAllReport" resultType="com.spring.cjs2108_cjr.vo.ReportVO">
+		select * from report
+		
+		<if test='orderBy.equals("idx")'>
+			 order by idx desc 
+		</if>
+		<if test='orderBy.equals("reporterNick")'>
+			 order by reporterNick 
+		</if>
+		<if test='orderBy.equals("reviewIdx")'>
+			 order by reviewIdx 
+		</if>
+		limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<select id="getReviewByIdx" resultType="com.spring.cjs2108_cjr.vo.ReviewVO">
+		select * from review where idx = #{reviewIdx};
+	</select>
+	
+	<update id="addWarn">
+		update member set warn = warn + 1 where nick = #{nick};
+	</update>
+	
+	<update id="hideReviewContent">
+		update review set reviewContent = '@@WARN' where idx = #{idx};
+	</update>
+	
+	<delete id="deleteReport">
+		delete from report where idx = #{idx};
+	</delete>
+	
+	<insert id="registNotice">
+		insert into notice values(default, #{vo.title}, #{vo.content}, default, default, #{vo.important});
+	</insert>
+	
+	<update id="updateNotice">
+		update notice set title = #{vo.title}, content = #{vo.content}, important = #{vo.important} where idx = #{vo.idx};
+	</update>
+	
+	<delete id="deleteNotice">
+		delete from notice where idx = #{idx};
+	</delete>
+	
+	<insert id="registFAQ">
+		insert into faq values(default, #{vo.question}, #{vo.answer}, default);
+	</insert>
+	
+	<update id="updateFAQ">
+		update faq set question = #{vo.question}, answer = #{vo.answer} where idx = #{vo.idx};
+	</update>
+	
+	<delete id="deleteFAQ">
+		delete from faq where idx = #{idx};
+	</delete>
+	
+	<select id="getSuggestionCnt" resultType="java.lang.Integer">
+		select count(*) from suggestion 
+		<if test="condition==4">
+			where <![CDATA[ _condition < #{condition} ]]> 
+		</if>
+		<if test="condition!=4">
+			where _condition=#{condition} 
+		</if>
+	</select>
+	
+	<select id="getSuggestionList" resultType="com.spring.cjs2108_cjr.vo.SuggestionVO">
+		select * from suggestion 
+		<if test="condition==4">
+			where <![CDATA[ _condition < #{condition} ]]> 
+		</if>
+		<if test="condition!=4">
+			where _condition=#{condition} 
+		</if>
+		order by idx desc limit #{startIndexNo},#{pageSize};
+	</select>
+	
+	<update id="suggestionChangeCondition">
+		update suggestion set _condition = #{condition} where idx = #{idx};
+	</update>
+	
+	<update id="updateNoticeImportantZero">
+		update notice set important = 0 where idx = #{idx};
+	</update>
+	
+	<select id="getFreeBoardList" resultType="com.spring.cjs2108_cjr.vo.FreeBoardVO">
+		select * from freeBoard 
+		where title like concat('%', #{keyWord}, '%') or nick like concat('%', #{keyWord}, '%') 
+		<if test='orderBy.equals("idx")'>
+			order by idx desc
+		</if>
+		<if test='orderBy.equals("views")'>
+			order by views desc
+		</if>
+		<if test='orderBy.equals("nick")'>
+			order by nick
+		</if>
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<delete id="deleteMember">
+		delete from member where nick = #{nick};
+	</delete>
+	
+	<update id="changeImportant">
+		update notice set important = 
+		<if test='pm.equals("plus")'>
+			important + 1
+		</if>
+		<if test='pm.equals("minus")'>
+			important - 1
+		</if>
+		
+		where idx = #{idx};
+	</update>
+	
+	<select id="getNewOffialApply" resultType="com.spring.cjs2108_cjr.vo.OfficialVO">
+		select * from official where checked=false order by idx limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getNewOffialApplyCnt" resultType="java.lang.Integer">
+		select count(*) from official where checked=false;
+	</select>
+	
+	<delete id="deleteOfficialVO">
+		delete from official where nick = #{nick};
+	</delete>
+	
+	<update id="officialLevelUp">
+		update official set checked = true where nick = #{nick};
+	</update>
+	
+	<select id="getOfficialVO" resultType="com.spring.cjs2108_cjr.vo.OfficialVO">
+		select nick, bank from official where nick=#{nick};
+	</select>
+	
+	<select id="getOfficialCnt" resultType="java.lang.Integer">
+		select count(*) from official where checked=true and
+		nick like concat('%', #{keyWord}, '%') or
+		bname like concat('%', #{keyWord}, '%') or
+		bnumber like concat('%', #{keyWord}, '%') or
+		mname like concat('%', #{keyWord}, '%')
+		;
+	</select>
+	
+	<select id="getOffialList" resultType="com.spring.cjs2108_cjr.vo.OfficialVO">
+		select * from official 
+		where checked=true and (
+		nick like concat('%', #{keyWord}, '%') or
+		bname like concat('%', #{keyWord}, '%') or
+		bnumber like concat('%', #{keyWord}, '%') or
+		mname like concat('%', #{keyWord}, '%')
+		)
+		<if test='orderBy.equals("idx")'>
+			order by idx desc
+		</if>
+		
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getNoAccessPerformCnt" resultType="java.lang.Integer">
+		select count(*) from perform where checked = false;
+	</select>
+	
+	<insert id="inputAdv">
+		insert into advertise values(default, #{vo.OFName}, #{vo.FSName}, #{vo.adtype}, #{vo.title}, #{vo.subMent}, true);
+	</insert>
+	
+	<select id="getAdvertiseList" resultType="com.spring.cjs2108_cjr.vo.AdvertiseVO">
+		select * from advertise order by idx desc;
+	</select>
+	
+	<update id="advertiseCheckFalse">
+		update advertise set checked=false where idx = #{idx};
+	</update>
+
+	<update id="advertiseCheckTrue">
+		update advertise set checked=true where idx = #{idx};
+	</update>
+	
+	<delete id="deleteAdvertise">
+		delete from advertise where idx = #{idx};
+	</delete>
+	
+	<select id="getVisitCnt" resultType="com.spring.cjs2108_cjr.vo.VisitDataVO">
+		<if test='range.equals("time")'>
+			SELECT DATE_FORMAT(vDate, '%H') as vDate, count(*) as count FROM visitdata	
+			GROUP BY DATE_FORMAT(vDate, '%H') 
+			ORDER BY DATE_FORMAT(vDate, '%H') ASC;
+		</if>
+		<if test='range.equals("date")'>
+			SELECT DATE_FORMAT(vDate, '%Y-%m-%d') as vDate, count(*) as count FROM visitdata	
+			where DATE_FORMAT(vDate, '%Y-%m-%d') > DATE_ADD(NOW(), INTERVAL -1 MONTH)
+			GROUP BY DATE_FORMAT(vDate, '%Y%m%d')
+			ORDER BY vDate ASC;
+		</if>
+		<if test='range.equals("calendar")'>
+			SELECT DATE_FORMAT(vDate, '%Y-%m-%d') as vDate, count(*) as count FROM visitdata	
+			GROUP BY DATE_FORMAT(vDate, '%Y%m%d')
+			ORDER BY vDate ASC;
+		</if>
+		<if test='range.equals("month")'>
+			SELECT DATE_FORMAT(vDate, '%m') as vDate, count(*) as count FROM visitdata	
+			GROUP BY DATE_FORMAT(vDate, '%m')
+			ORDER BY vDate ASC;
+		</if>
+		<if test='range.equals("year")'>
+			SELECT DATE_FORMAT(vDate, '%Y') as vDate, count(*) as count FROM visitdata	
+			GROUP BY DATE_FORMAT(vDate, '%Y')
+			ORDER BY vDate ASC;
+		</if>
+		<if test='range.equals("day")'>
+			SELECT
+			  CASE DAYOFWEEK(vDate)
+			    WHEN 1 THEN "Sun"
+			    WHEN 2 THEN "Mon"
+			    WHEN 3 THEN "Tue"
+			    WHEN 4 THEN "Wed"
+			    WHEN 5 THEN "Thu"
+			    WHEN 6 THEN "Fri"
+			    WHEN 7 THEN "Sat"
+			  END AS day
+			,count(*) AS count
+			FROM visitdata 
+			<!-- WHERE date_format(vDate,"%Y%m%d") BETWEEN "20181101" AND "20221116" -->
+			GROUP BY DAYOFWEEK(vDate);
+		</if>
+	</select>
+	
+	<select id="getTicketsSalesData" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select title as performTitle, sum(ticketNum) as ticketNum from perform, ticketing 
+		where ticketing.performIdx = perform.idx group by performIdx
+		order by sum(ticketNum) desc;
+	</select>
+	
+	<select id="getAdvertise" resultType="com.spring.cjs2108_cjr.vo.AdvertiseVO">
+		select * from advertise where idx = #{idx};
+	</select>
+	
+	<select id="getAdvertiseCnt" resultType="java.lang.Integer">
+		select count(*) from advertise where adtype = #{adtype} and checked = true;
+	</select>
+	
+	<select id="getPerformsCntInTheme" resultType="java.lang.Integer">
+		select count(*) from themeperform where theme = #{theme} and performIdx is not null;
+	</select>
+	
+	<select id="getRegionTicketSales" resultType="com.spring.cjs2108_cjr.vo.RegionTicketSalesVO">
+		<![CDATA[
+		(select 'KR-11' as regionCode, '서울' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>0 and cast(substr(addrCode, 1, 2) as unsigned)<=8)
+		union
+		(select 'KR-41', '경기' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=10 and cast(substr(addrCode, 1, 2) as unsigned)<19)
+		union
+		(select 'KR-28', '인천' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=21 and cast(substr(addrCode, 1, 2) as unsigned)<24)
+		union
+		(select 'KR-42', '강원' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=24 and cast(substr(addrCode, 1, 2) as unsigned)<27)
+		union
+		(select 'KR-43', '충북/세종' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=27 and cast(substr(addrCode, 1, 2) as unsigned)<31)
+		union
+		(select 'KR-44', '충남' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=31 and cast(substr(addrCode, 1, 2) as unsigned)<34)
+		union
+		(select 'KR-30', '대전' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=34 and cast(substr(addrCode, 1, 2) as unsigned)<36)
+		union
+		(select 'KR-47', '경북' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=36 and cast(substr(addrCode, 1, 2) as unsigned)<41)
+		union
+		(select 'KR-27', '대구' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=41 and cast(substr(addrCode, 1, 2) as unsigned)<44)
+		union
+		(select 'KR-31', '울산' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=44 and cast(substr(addrCode, 1, 2) as unsigned)<46)
+		union
+		(select 'KR-26', '부산' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=46 and cast(substr(addrCode, 1, 2) as unsigned)<50)
+		union
+		(select 'KR-48', '경남' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=50 and cast(substr(addrCode, 1, 2) as unsigned)<54)
+		union
+		(select 'KR-45', '전북' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=54 and cast(substr(addrCode, 1, 2) as unsigned)<57)
+		union
+		(select 'KR-46', '전남' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=57 and cast(substr(addrCode, 1, 2) as unsigned)<60)
+		union
+		(select 'KR-29', '광주' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)>=61 and cast(substr(addrCode, 1, 2) as unsigned)<63)
+		union
+		(select 'KR-49', '제주' as regionName, sum(ticketNum) as cnt 
+		from ticketing, member 
+		where member.nick = ticketing.membernick and cancle=0 and 
+		cast(substr(addrCode, 1, 2) as unsigned)=63)
+		]]>
+		order by cnt desc;
+	</select>
+	
+	<select id="getTheaterCnt" resultType="java.lang.Integer">
+		select count(*) from theater 
+		where name like concat('%', #{keyWord}, '%') or address1 like concat('%', #{keyWord}, '%'); 
+	</select>
+	
+	<delete id="deleteOfficialApply">
+		delete from official where nick = #{nick};
+	</delete>
+	
+	<select id="getNewBoardCnt" resultType="java.lang.Integer">
+		<![CDATA[ select count(*) from freeboard where date_format(wDate, '%Y-%m-%d %H') > date_add(now(), interval -24 hour);]]>
+	</select>
+	
+	<select id="getNewReplyCnt" resultType="java.lang.Integer">
+		<![CDATA[ select count(*) from boardReply where date_format(wDate, '%Y-%m-%d %H') > date_add(now(), interval -24 hour);]]>
+	</select>
+	
+	<select id="getTotReplyCnt" resultType="java.lang.Integer">
+		select count(*) from boardreply 
+		where nick like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%');
+	</select>
+	
+	<select id="getRepliesList" resultType="com.spring.cjs2108_cjr.vo.BoardReplyVO">
+		select * from boardreply
+		where nick like concat('%', #{keyWord}, '%') or content like concat('%', #{keyWord}, '%')
+		order by idx desc
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getEmailByNick" resultType="java.lang.String">
+		select email from member where nick = #{nick};
+	</select>
+	
+	<delete id="deleteReply">
+		delete from boardreply where idx = #{idx};
+	</delete>
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.spring.cjs2108_cjr.dao.TicketingDAO">
+	<insert id="registTicketing">
+		insert into ticketing values(default, #{vo.memberNick}, #{vo.performIdx}, #{vo.performScheduleIdx}, #{vo.selectSeatNum}, #{vo.price}, #{vo.usePoint}, #{vo.finalPrice}, #{vo.payBy}, now(), #{vo.print}, default, #{vo.ticketNum});
+	</insert>
+	
+	<update id="printTicket">
+		update ticketing set print = true where idx = #{idx};
+	</update>
+	
+	<select id="getTicketNum" resultType="_int">
+		select count(*) from ticketing where memberNick = #{nick};
+	</select>
+	
+	<select id="getTicketsList" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select ticketing.idx as idx, ticketing.memberNick as memberNick, perform.idx as performIdx,
+		perform.title as performTitle, perform.theater as performTheater, 
+		DATE_FORMAT(performSchedule.schedule, '%Y년 %m월 %d일 %H:%i') as performSchedule, 
+		ticketing.selectSeatNum as selectSeatNum, 
+		perform.seat as performSeat, ticketing.price as price, 
+		ticketing.usePoint as usePoint, ticketing.finalPrice as finalPrice, ticketing.payBy as payBy, 
+		ticketing.payDate as payDate,
+		ticketing.print as print, 
+		ticketing.cancle as cancle
+		from ticketing, perform, performSchedule 
+		where ticketing.performIdx = perform.idx 
+		and ticketing.performScheduleIdx = performSchedule.idx 
+		and performSchedule.performIdx = perform.idx and memberNick = #{nick}
+		order by ticketing.idx desc
+		limit #{startIndexNo}, #{pageSize};
+	</select>
+	
+	<select id="getTicketInfo" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select * from ticketing where idx = #{idx};
+	</select>
+	
+	<update id="ticketCancle">
+		update ticketing set cancle = true where idx=#{idx};
+	</update>
+	
+	<select id="getTicketsListCnt" resultType="_int">
+		select count(*) from ticketing where memberNick = #{nick};
+	</select>
+	
+	<select id="getMyPerformTicketsList" resultType="com.spring.cjs2108_cjr.vo.TicketingVO">
+		select * from ticketing where performIdx = #{idx};
+	</select>
+	
+	<select id="getTicketIdx" resultType="java.lang.Integer">
+		select max(idx) from ticketing where memberNick = #{nick};
+	</select>
+	
+	<insert id="setQRTicket">
+		insert into qrticket values(#{ticketIdx}, #{img});
+	</insert>
+	
+	<select id="getQR" resultType="java.lang.String">
+		select img from QRTicket where ticketIdx = #{idx};
+	</select>
+</mapper>
